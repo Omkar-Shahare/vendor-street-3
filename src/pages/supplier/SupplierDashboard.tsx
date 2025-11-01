@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,18 +19,21 @@ const SupplierDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("group");
   const [showGroupModal, setShowGroupModal] = useState(false);
-  const [newGroup, setNewGroup] = useState({ 
-    product: "", 
-    quantity: "", 
+  const [newGroup, setNewGroup] = useState({
+    product: "",
+    quantity: "",
     actualRate: "",
     finalRate: "",
     discountPercentage: "",
-    location: "", 
-    deadline: "", 
+    location: "",
+    deadline: "",
     deadlineTime: "",
     latitude: "",
-    longitude: ""
+    longitude: "",
+    imageUrl: ""
   });
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [showProfileEditModal, setShowProfileEditModal] = useState(false);
   const [showHamburgerMenu, setShowHamburgerMenu] = useState(false);
   
@@ -734,8 +737,18 @@ const SupplierDashboard = () => {
               {getFilteredGroupRequests().map((request) => (
                 <div key={request.id} className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow p-4">
                   <div className="mb-3">
-                    <div className="w-full h-32 bg-blue-100 rounded-lg flex items-center justify-center mb-3">
-                      <Package className="w-12 h-12 text-blue-600" />
+                    <div className="w-full h-32 bg-blue-100 rounded-lg overflow-hidden mb-3">
+                      {request.imageUrl ? (
+                        <img
+                          src={request.imageUrl}
+                          alt={request.product}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Package className="w-12 h-12 text-blue-600" />
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="font-semibold text-lg text-gray-900">{request.product}</div>
@@ -1451,6 +1464,104 @@ const SupplierDashboard = () => {
                 </div>
               </div>
               
+              {/* Product Image Upload */}
+              <div>
+                <label className="block text-sm font-medium mb-2">Product Image (Optional)</label>
+                <div className="space-y-3">
+                  {/* Image Preview */}
+                  {imagePreview && (
+                    <div className="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden border-2 border-blue-200">
+                      <img
+                        src={imagePreview}
+                        alt="Product preview"
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setImagePreview(null);
+                          setNewGroup({ ...newGroup, imageUrl: "" });
+                          if (fileInputRef.current) {
+                            fileInputRef.current.value = "";
+                          }
+                        }}
+                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 transition-colors"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Image Upload Buttons */}
+                  {!imagePreview && (
+                    <div className="flex gap-2">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              const result = reader.result as string;
+                              setImagePreview(result);
+                              setNewGroup({ ...newGroup, imageUrl: result });
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex-1 flex items-center justify-center gap-2"
+                      >
+                        <Package className="w-4 h-4" />
+                        Choose from Gallery
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const input = document.createElement('input');
+                          input.type = 'file';
+                          input.accept = 'image/*';
+                          input.capture = 'environment';
+                          input.onchange = (e: any) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                const result = reader.result as string;
+                                setImagePreview(result);
+                                setNewGroup({ ...newGroup, imageUrl: result });
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          };
+                          input.click();
+                        }}
+                        className="flex-1 flex items-center justify-center gap-2"
+                      >
+                        <Camera className="w-4 h-4" />
+                        Take Photo
+                      </Button>
+                    </div>
+                  )}
+
+                  <p className="text-xs text-gray-500">
+                    Add a photo of your product to help vendors identify it easily
+                  </p>
+                </div>
+              </div>
+
               {/* Auto-fill location preference */}
               <div className="bg-blue-50 rounded-lg p-3">
                 <label className="flex items-center gap-2">
@@ -1526,18 +1637,23 @@ const SupplierDashboard = () => {
                         description: `${newGroup.product} group created for ${newGroup.location}`,
                       });
                       setShowGroupModal(false);
-                      setNewGroup({ 
-                        product: "", 
-                        quantity: "", 
+                      setNewGroup({
+                        product: "",
+                        quantity: "",
                         actualRate: "",
                         finalRate: "",
                         discountPercentage: "",
-                        location: autoFillLocation && currentLocation ? currentLocation.name : "", 
-                        deadline: "", 
+                        location: autoFillLocation && currentLocation ? currentLocation.name : "",
+                        deadline: "",
                         deadlineTime: "",
                         latitude: autoFillLocation && currentLocation ? currentLocation.latitude.toString() : "",
-                        longitude: autoFillLocation && currentLocation ? currentLocation.longitude.toString() : ""
+                        longitude: autoFillLocation && currentLocation ? currentLocation.longitude.toString() : "",
+                        imageUrl: ""
                       });
+                      setImagePreview(null);
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = "";
+                      }
                     } catch (err) {
                       console.error('Error creating product group:', err);
                       toast({
