@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, Users, TrendingUp, Clock, MapPin, CheckCircle, XCircle, Plus, User, Edit, Camera, Mail, Phone, Building, Shield, Star, Calendar, Award, Truck, DollarSign, Menu, Settings, HelpCircle, LogOut, Navigation, Target, Search } from "lucide-react";
+import { Package, Users, TrendingUp, Clock, MapPin, CheckCircle, XCircle, Plus, User, Edit, Camera, Mail, Phone, Building, Shield, Star, Calendar, Award, Truck, DollarSign, Menu, Settings, HelpCircle, LogOut, Navigation, Target, Search, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -515,18 +515,19 @@ const SupplierDashboard = () => {
             id: order.id,
             product: items && items.length > 0 ? items[0].name : 'Unknown Product',
             vendor: order.vendor_name || 'Unknown Vendor',
-            vendorPhone: order.vendor_phone || '',
+            vendorPhone: order.vendor_phone || customerDetails?.phone || '',
             stallName: order.stall_name || '',
-            location: order.vendor_city || 'Unknown Location',
+            location: order.vendor_city || customerDetails?.address || 'Unknown Location',
             quantity: items && items.length > 0 ? `${items[0].quantity}kg` : '0kg',
             requestedPrice: items && items.length > 0 ? `₹${items[0].pricePerKg}/kg` : '₹0/kg',
             totalValue: `₹${order.total_amount.toFixed(2)}`,
             status: order.status || 'pending',
+            paymentStatus: order.payment_status || 'pending',
+            paymentMethod: order.payment_method || 'unknown',
             createdAt: order.created_at,
             customerDetails: customerDetails,
             deliveryAddress: order.delivery_address,
             notes: order.notes,
-            paymentMethod: order.payment_method,
             vendorId: order.vendor_id
           };
         });
@@ -853,18 +854,25 @@ const SupplierDashboard = () => {
                         <span>{order.vendorPhone}</span>
                       </div>
                     )}
+                    <div className="flex items-center text-xs text-gray-500 mb-2">
+                      <CreditCard className="w-3 h-3 mr-1" />
+                      <span className="capitalize">{order.paymentMethod}</span>
+                    </div>
                     <div className="flex items-center text-xs text-gray-500 mb-3">
                       <Clock className="w-3 h-3 mr-1" />
                       <span>{new Date(order.createdAt).toLocaleDateString()}</span>
                     </div>
-                    
-                    {/* Order Status Display */}
+
+                    {/* Payment Status Display */}
                     <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded-lg">
                       <div className="flex items-center justify-center">
-                        <span className="text-green-700 font-medium text-sm">Payment Completed</span>
+                        <CheckCircle className="w-4 h-4 text-green-600 mr-1" />
+                        <span className="text-green-700 font-medium text-sm">
+                          {order.paymentStatus === 'completed' ? 'Payment Confirmed' : 'Payment Pending'}
+                        </span>
                       </div>
                       <p className="text-green-600 text-xs text-center mt-1">
-                        Order confirmed and ready for processing
+                        {order.status === 'confirmed' ? 'Order confirmed and ready for processing' : 'Order received from vendor'}
                       </p>
                     </div>
                   </div>
