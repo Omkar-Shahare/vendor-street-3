@@ -33,6 +33,7 @@ const SupplierDashboard = () => {
     imageUrl: ""
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [showProfileEditModal, setShowProfileEditModal] = useState(false);
   const [showHamburgerMenu, setShowHamburgerMenu] = useState(false);
@@ -465,6 +466,15 @@ const SupplierDashboard = () => {
       request.location.toLowerCase().includes(groupSearch.toLowerCase())
     );
   };
+
+  // Cleanup object URL when component unmounts or modal closes
+  useEffect(() => {
+    return () => {
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, []);
 
   // Fetch orders with real-time updates
   useEffect(() => {
@@ -1320,7 +1330,7 @@ const SupplierDashboard = () => {
       {/* Enhanced Create Product Group Modal */}
       {showGroupModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg border">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg border max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-6">
               <h2 className="text-xl font-semibold">Create Product Group</h2>
               <button 
@@ -1479,7 +1489,11 @@ const SupplierDashboard = () => {
                       <button
                         type="button"
                         onClick={() => {
+                          if (imagePreview) {
+                            URL.revokeObjectURL(imagePreview);
+                          }
                           setImagePreview(null);
+                          setImageFile(null);
                           setNewGroup({ ...newGroup, imageUrl: "" });
                           if (fileInputRef.current) {
                             fileInputRef.current.value = "";
@@ -1503,13 +1517,10 @@ const SupplierDashboard = () => {
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) {
-                            const reader = new FileReader();
-                            reader.onloadend = () => {
-                              const result = reader.result as string;
-                              setImagePreview(result);
-                              setNewGroup({ ...newGroup, imageUrl: result });
-                            };
-                            reader.readAsDataURL(file);
+                            const objectUrl = URL.createObjectURL(file);
+                            setImageFile(file);
+                            setImagePreview(objectUrl);
+                            setNewGroup({ ...newGroup, imageUrl: objectUrl });
                           }
                         }}
                       />
@@ -1537,13 +1548,10 @@ const SupplierDashboard = () => {
                           input.onchange = (e: any) => {
                             const file = e.target.files?.[0];
                             if (file) {
-                              const reader = new FileReader();
-                              reader.onloadend = () => {
-                                const result = reader.result as string;
-                                setImagePreview(result);
-                                setNewGroup({ ...newGroup, imageUrl: result });
-                              };
-                              reader.readAsDataURL(file);
+                              const objectUrl = URL.createObjectURL(file);
+                              setImageFile(file);
+                              setImagePreview(objectUrl);
+                              setNewGroup({ ...newGroup, imageUrl: objectUrl });
                             }
                           };
                           input.click();
@@ -1582,7 +1590,17 @@ const SupplierDashboard = () => {
             </div>
             
             <div className="flex justify-end gap-2 mt-6">
-              <Button variant="outline" onClick={() => setShowGroupModal(false)}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (imagePreview) {
+                    URL.revokeObjectURL(imagePreview);
+                  }
+                  setImagePreview(null);
+                  setImageFile(null);
+                  setShowGroupModal(false);
+                }}
+              >
                 Cancel
               </Button>
               <Button
@@ -1650,7 +1668,11 @@ const SupplierDashboard = () => {
                         longitude: autoFillLocation && currentLocation ? currentLocation.longitude.toString() : "",
                         imageUrl: ""
                       });
+                      if (imagePreview) {
+                        URL.revokeObjectURL(imagePreview);
+                      }
                       setImagePreview(null);
+                      setImageFile(null);
                       if (fileInputRef.current) {
                         fileInputRef.current.value = "";
                       }
