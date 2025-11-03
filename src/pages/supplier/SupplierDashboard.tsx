@@ -467,14 +467,6 @@ const SupplierDashboard = () => {
     );
   };
 
-  // Cleanup object URL when component unmounts or modal closes
-  useEffect(() => {
-    return () => {
-      if (imagePreview) {
-        URL.revokeObjectURL(imagePreview);
-      }
-    };
-  }, []);
 
   // Fetch orders with real-time updates
   useEffect(() => {
@@ -1497,9 +1489,6 @@ const SupplierDashboard = () => {
                       <button
                         type="button"
                         onClick={() => {
-                          if (imagePreview) {
-                            URL.revokeObjectURL(imagePreview);
-                          }
                           setImagePreview(null);
                           setImageFile(null);
                           setNewGroup({ ...newGroup, imageUrl: "" });
@@ -1525,10 +1514,14 @@ const SupplierDashboard = () => {
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) {
-                            const objectUrl = URL.createObjectURL(file);
-                            setImageFile(file);
-                            setImagePreview(objectUrl);
-                            setNewGroup({ ...newGroup, imageUrl: objectUrl });
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              const base64String = reader.result as string;
+                              setImageFile(file);
+                              setImagePreview(base64String);
+                              setNewGroup({ ...newGroup, imageUrl: base64String });
+                            };
+                            reader.readAsDataURL(file);
                           }
                         }}
                       />
@@ -1556,10 +1549,14 @@ const SupplierDashboard = () => {
                           input.onchange = (e: any) => {
                             const file = e.target.files?.[0];
                             if (file) {
-                              const objectUrl = URL.createObjectURL(file);
-                              setImageFile(file);
-                              setImagePreview(objectUrl);
-                              setNewGroup({ ...newGroup, imageUrl: objectUrl });
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                const base64String = reader.result as string;
+                                setImageFile(file);
+                                setImagePreview(base64String);
+                                setNewGroup({ ...newGroup, imageUrl: base64String });
+                              };
+                              reader.readAsDataURL(file);
                             }
                           };
                           input.click();
@@ -1601,9 +1598,6 @@ const SupplierDashboard = () => {
               <Button
                 variant="outline"
                 onClick={() => {
-                  if (imagePreview) {
-                    URL.revokeObjectURL(imagePreview);
-                  }
                   setImagePreview(null);
                   setImageFile(null);
                   setShowGroupModal(false);
@@ -1676,9 +1670,6 @@ const SupplierDashboard = () => {
                         longitude: autoFillLocation && currentLocation ? currentLocation.longitude.toString() : "",
                         imageUrl: ""
                       });
-                      if (imagePreview) {
-                        URL.revokeObjectURL(imagePreview);
-                      }
                       setImagePreview(null);
                       setImageFile(null);
                       if (fileInputRef.current) {
